@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>JergAI</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="container">
+  <h1>Jerg<span>AI</span></h1>
+  <p class="tagline">Build Roblox Games Instantly</p>
+
+  <textarea id="prompt" placeholder="Describe your Roblox game..."></textarea>
+
+  <div class="controls">
+    <select id="mode">
+      <option value="code">Code Mode</option>
+      <option value="file">File Mode (.zip)</option>
+    </select>
+
+    <button onclick="generate()">Generate</button>
+  </div>
+
+  <pre id="output"></pre>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
