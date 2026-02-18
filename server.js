@@ -10,24 +10,18 @@ import os from "os";
 dotenv.config();
 
 const app = express();
+
+// ✅ Never log your API key
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static("public"));
 
-/*
-==================================================
-JergAI Generate Route
-==================================================
-*/
-
 app.post("/generate", async (req, res) => {
   const { prompt, mode } = req.body;
 
-  if (!prompt) {
-    return res.status(400).json({ error: "Prompt is required." });
-  }
+  if (!prompt) return res.status(400).json({ error: "Prompt is required." });
 
   try {
     const completion = await openai.chat.completions.create({
@@ -37,32 +31,26 @@ app.post("/generate", async (req, res) => {
           role: "system",
           content: `
 You are JergAI, an expert Roblox Luau developer.
-
-Always generate properly structured Roblox scripts.
-
-Separate scripts clearly using file headers like:
+Generate properly structured Roblox scripts.
+Use clear file headers:
 
 -- ServerScriptService/Main.server.lua
-(code)
-
 -- StarterPlayer/StarterPlayerScripts/Client.client.lua
-(code)
-
 -- ReplicatedStorage/Remotes.lua
-(code)
 
-Use proper RemoteEvents, server/client separation,
-clean structure, and optimized performance.
-          `
+Always include RemoteEvents if needed.
+Separate each script clearly with its file header.
+        `,
         },
-        {
-          role: "user",
-          content: prompt
-        }
-      ]
+        { role: "user", content: prompt },
+      ],
+      temperature: 0.5, // more predictable output
     });
 
-    const aiText = completion.choices[0].message.content;
+    // ✅ Safely parse AI response
+    const aiText = completion?.choices?.[0]?.message?.content?.trim();
+
+    if (!aiText) return res.status(500).json({ error: "AI returned empty response." });
 
     // ========================
     // CODE MODE
@@ -72,14 +60,13 @@ clean structure, and optimized performance.
     }
 
     // ========================
-    // FILE MODE (ZIP DOWNLOAD)
+    // FILE MODE
     // ========================
     if (mode === "file") {
       const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "jergai-"));
       const luaFilePath = path.join(tempDir, "JergAI_Game.lua");
       const zipPath = path.join(tempDir, "JergAI_Game.zip");
 
-      // Write Lua file
       fs.writeFileSync(luaFilePath, aiText);
 
       const output = fs.createWriteStream(zipPath);
@@ -92,25 +79,15 @@ clean structure, and optimized performance.
 
       output.on("close", () => {
         res.download(zipPath, "JergAI_Game.zip", () => {
-          // Cleanup temp folder after download
           fs.rmSync(tempDir, { recursive: true, force: true });
         });
       });
     }
-  } catch (error) {
-    console.error("JergAI Error:", error);
+  } catch (err) {
+    console.error("JergAI Error:", err.message || err);
     res.status(500).json({ error: "AI generation failed." });
   }
 });
 
-/*
-==================================================
-PORT FIX FOR RAILWAY
-==================================================
-*/
-
 const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-  console.log(`🚀 JergAI running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`🚀 JergAI running on port ${PORT}`));
