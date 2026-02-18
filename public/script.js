@@ -5,21 +5,25 @@ async function generate() {
 
   output.textContent = "Generating...";
 
-  const response = await fetch("/generate", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ prompt, mode })
-  });
+  try {
+    const response = await fetch("/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt, mode })
+    });
 
-  if (mode === "code") {
-    const data = await response.json();
-    output.textContent = data.output;
-  } else {
-    const blob = await response.blob();
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "JergAI_Game.zip";
-    a.click();
+    if (mode === "code") {
+      const data = await response.json();
+      output.textContent = data.output;
+    } else {
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "JergAI_Game.zip";
+      a.click();
+    }
+  } catch (err) {
+    output.textContent = "Error: " + err.message;
   }
 }
