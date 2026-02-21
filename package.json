@@ -1,13 +1,13 @@
 {
   "name": "jergai",
   "version": "1.0.0",
-  "description": "JergAI Roblox Game Generator",
-  "type": "module",
+  "description": "JergAI",
+  "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "engines": {
-    "node": "20.x"
+    "node": "18.x"
   },
   "dependencies": {
     "archiver": "^5.3.1",
