@@ -1,56 +1,52 @@
-import express from "express";
-import cors from "cors";
-import dotenv from "dotenv";
-import fs from "fs";
-import path from "path";
-import os from "os";
-import archiver from "archiver";
-import OpenAI from "openai";
+const express = require("express");
+const cors = require("cors");
+const dotenv = require("dotenv");
+const fs = require("fs");
+const path = require("path");
+const os = require("os");
+const archiver = require("archiver");
+const OpenAI = require("openai");
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ===== BASIC STARTUP LOG =====
 console.log("Starting JergAI...");
 
-// ===== VERIFY API KEY =====
-if (!process.env.OPENAI_API_KEY) {
-  console.error("OPENAI_API_KEY is missing.");
-  process.exit(1);
-}
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
-
+// ===== MIDDLEWARE =====
 app.use(cors());
 app.use(express.json());
 app.use(express.static("public"));
 
 // ===== HEALTH ROUTE =====
 app.get("/", (req, res) => {
-  res.json({ status: "JergAI is alive" });
+  res.status(200).send("JergAI is running.");
 });
 
 // ===== GENERATE ROUTE =====
 app.post("/generate", async (req, res) => {
   try {
+    if (!process.env.OPENAI_API_KEY) {
+      return res.status(500).json({
+        error: "OPENAI_API_KEY missing in Railway variables."
+      });
+    }
+
     const { prompt, mode } = req.body;
 
     if (!prompt) {
-      return res.status(400).json({ error: "Prompt required" });
+      return res.status(400).json({ error: "Prompt required." });
     }
+
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY
+    });
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
-        {
-          role: "system",
-          content:
-            "You are a Roblox Luau developer. Generate structured scripts."
-        },
+        { role: "system", content: "Generate Roblox Luau scripts." },
         { role: "user", content: prompt }
       ]
     });
@@ -87,12 +83,11 @@ app.post("/generate", async (req, res) => {
       return;
     }
 
-    return res.json({ output: aiText });
+    res.json({ output: aiText });
+
   } catch (err) {
-    console.error("Generate error:", err);
-    return res.status(500).json({
-      error: "Generation failed"
-    });
+    console.error("Error:", err);
+    res.status(500).json({ error: "Server error." });
   }
 });
 
